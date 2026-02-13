@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TEN DROP - Make 10 Puzzle</title>
+    <style>
+        /* --- 全体のデザイン --- */
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #2c3e50;
+            font-family: 'Verdana', sans-serif;
+            color: white;
+            touch-action: manipulation; /* スマホでの操作性向上 */
+        }
+
+        #game-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100vh;
+            max-width: 600px;
+            margin: 0 auto;
+            background: #34495e;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- ヘッダー（スコア・情報） --- */
+        #header {
+            height: 60px;
+            background: #2c3e50;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            border-bottom: 3px solid #7f8c8d;
+            z-index: 10;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .info-label { font-size: 14px; color: #bdc3c7; }
+        .info-value { font-size: 24px; font-weight: bold; }
+
+        /* 現在の合計表示（重要） */
+        #sum-indicator {
+            background-color: #95a5a6;
+            width: 80px;
+            height: 40px;
+            border-radius: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 22px;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        #sum-indicator.valid { background-color: #2ecc71; transform: scale(1.1); box-shadow: 0 0 10px #2ecc71; } /* 合計10 */
+        #sum-indicator.invalid { background-color: #e74c3c; animation: shake 0.3s; } /* オーバー */
+
+        /* 一時停止ボタン */
+        #pause-btn {
+            margin: 0;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 2px solid #bdc3c7;
+            background: transparent;
+            color: #bdc3c7;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: none;
+            transition: all 0.2s;
+        }
+        #pause-btn:hover { border-color: white; color: white; }
+        #pause-btn:active { transform: scale(0.9); }
+
+        /* --- ゲーム盤（グリッド） --- */
+        #board-container {
+            flex-grow: 1;
+            position: relative;
+            background-color: #ecf0f1;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        /* グリッドの線（背景として描画） */
+        .grid-line-v { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(0,0,0,0.1); }
+        .grid-line-h { position: absolute; left: 0; right: 0; height: 1px; background: rgba(0,0,0,0.1); }
+
+        /* --- 数字ブロック --- */
+        .block {
+            position: absolute;
+            width: 50px; /* JSで動的に調整 */
+            height: 50px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 34px; 
+            font-weight: 800;
+            color: white;
+            box-sizing: border-box;
+            box-shadow: inset 0 -4px 0 rgba(0,0,0,0.2);
+            transition: top 0.2s ease-in, transform 0.1s;
+            user-select: none;
+            z-index: 5;
+            text-shadow: 1px 1px 0 rgba(0,0,0,0.2);
+        }
+
+        .block.selected {
+            border: 4px solid #f1c40f;
+            transform: scale(0.9);
+            z-index: 10;
+        }
+
+        .num-1 { background-color: #3498db; }
+        .num-2 { background-color: #e67e22; }
+        .num-3 { background-color: #2ecc71; }
+        .num-4 { background-color: #9b59b6; }
+        .num-5 { background-color: #f1c40f; color: #333; }
+        .num-6 { background-color: #1abc9c; }
+        .num-7 { background-color: #e74c3c; }
+        .num-8 { background-color: #34495e; }
+        .num-9 { background-color: #7f8c8d; }
+
+        .poof { animation: poofAnim 0.3s forwards; }
+        @keyframes poofAnim {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* --- オーバーレイ（共通デザイン） --- */
+        .overlay-screen {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(44, 62, 80, 0.95);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+        }
+        
+        /* ポーズ画面は少し薄く */
+        #pause-overlay {
+            background: rgba(44, 62, 80, 0.85); 
+            z-index: 90;
+            display: none; /* 初期は非表示 */
+        }
+
+        h1 { color: #f1c40f; font-size: 48px; margin: 0 0 20px 0; text-shadow: 3px 3px 0 #000; letter-spacing: 2px;}
+        h2 { color: #ecf0f1; font-size: 40px; margin: 0 0 20px 0; letter-spacing: 2px; }
+        p { font-size: 18px; margin: 10px; text-align: center; line-height: 1.6; color: #ecf0f1; }
+        
+        .main-btn {
+            margin-top: 30px;
+            padding: 15px 50px;
+            font-size: 24px;
+            font-weight: bold;
+            background: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #219150;
+            transition: transform 0.1s;
+        }
+        .main-btn:active { transform: translateY(6px); box-shadow: none; }
+
+        .danger-zone {
+            background-color: rgba(231, 76, 60, 0.2) !important;
+        }
+
+    </style>
+</head>
+<body>
+
+<div id="game-wrapper">
+    <!-- ヘッダー -->
+    <div id="header">
+        <div class="header-left">
+            <div>
+                <div class="info-label">SCORE</div>
+                <div class="info-value" id="score-display">0</div>
+            </div>
+            <button id="pause-btn" onclick="game.togglePause()">❚❚</button>
+        </div>
+        
+        <div>
+            <div class="info-label" style="text-align:center;">SUM</div>
+            <div id="sum-indicator">0</div>
+        </div>
+        
+        <div>
+            <div class="info-label">LEVEL</div>
+            <div class="info-value" id="level-display">1</div>
+        </div>
+    </div>
+
+    <!-- ゲーム盤 -->
+    <div id="board-container">
+        <!-- グリッド線とブロックはJSで生成 -->
+    </div>
+
+    <!-- ポーズ画面 -->
+    <div id="pause-overlay" class="overlay-screen">
+        <h2>PAUSED</h2>
+        <button class="main-btn" onclick="game.togglePause()">RESUME</button>
+    </div>
+
+    <!-- スタート/ゲームオーバー画面 -->
+    <div id="start-overlay" class="overlay-screen">
+        <h1 id="title-text">TEN DROP</h1>
+        <p id="msg-text">
+            落ちてくる数字をタップして<br>
+            合計 <strong>10</strong> を作って消そう！<br>
+            <span style="font-size:14px; color:#95a5a6; display:block; margin-top:10px;">(例: 7+3, 5+5, 1+2+7)</span>
+        </p>
+        <button class="main-btn" onclick="game.start()">START</button>
+    </div>
+</div>
+
+<script>
+/**
+ * TEN DROP Game Logic
+ */
+
+const GameConfig = {
+    cols: 6,
+    rows: 9,
+    baseSpawnRate: 3000, 
+    minSpawnRate: 800,   
+    gravityRate: 400,    
+};
+
+class Block {
+    constructor(id, val, col, row) {
+        this.id = id;
+        this.val = val;
+        this.col = col;
+        this.row = row; 
+        this.el = null; 
+        this.selected = false;
+    }
+}
+
+class TenDropGame {
+    constructor() {
+        this.boardEl = document.getElementById('board-container');
+        this.scoreEl = document.getElementById('score-display');
+        this.levelEl = document.getElementById('level-display');
+        this.sumEl = document.getElementById('sum-indicator');
+        this.startOverlay = document.getElementById('start-overlay');
+        this.pauseOverlay = document.getElementById('pause-overlay');
+        this.pauseBtn = document.getElementById('pause-btn');
+        
+        this.grid = [];
+        this.blocks = []; 
+        this.nextId = 1;
+        
+        this.score = 0;
+        this.level = 1;
+        this.spawnTimer = null;
+        this.gravityTimer = null;
+        this.isGameOver = false;
+        this.isPaused = false;
+        
+        this.blockSize = 0; 
+        
+        window.addEventListener('resize', () => this.resizeBoard());
+    }
+
+    // --- 初期化と開始 ---
+    start() {
+        this.score = 0;
+        this.level = 1;
+        this.isGameOver = false;
+        this.isPaused = false;
+        this.nextId = 1;
+        this.blocks = [];
+        
+        this.grid = Array(GameConfig.rows).fill(null).map(() => Array(GameConfig.cols).fill(null));
+
+        this.updateUI();
+        this.startOverlay.style.display = 'none';
+        this.pauseOverlay.style.display = 'none';
+        this.boardEl.innerHTML = ''; 
+        this.boardEl.classList.remove('danger-zone');
+        this.pauseBtn.innerText = '❚❚';
+
+        this.resizeBoard();
+        this.drawGridLines();
+
+        for(let i=0; i<5; i++) {
+            this.spawnBlock(true); 
+        }
+
+        this.startTimers();
+    }
+
+    // --- ポーズ機能 ---
+    togglePause() {
+        // ゲーム中以外は反応しない
+        if (this.isGameOver || this.startOverlay.style.display !== 'none') return;
+
+        this.isPaused = !this.isPaused;
+
+        if (this.isPaused) {
+            this.stopTimers();
+            this.pauseOverlay.style.display = 'flex';
+            this.pauseBtn.innerText = '▶';
+        } else {
+            this.startTimers();
+            this.pauseOverlay.style.display = 'none';
+            this.pauseBtn.innerText = '❚❚';
+        }
+    }
+
+    startTimers() {
+        this.stopTimers(); // 重複防止
+
+        let rate = Math.max(GameConfig.minSpawnRate, GameConfig.baseSpawnRate - (this.level * 150));
+        
+        this.spawnTimer = setInterval(() => this.spawnBlock(), rate);
+        this.gravityTimer = setInterval(() => this.applyGravity(), GameConfig.gravityRate);
+    }
+
+    stopTimers() {
+        if(this.spawnTimer) clearInterval(this.spawnTimer);
+        if(this.gravityTimer) clearInterval(this.gravityTimer);
+    }
+
+    resizeBoard() {
+        const w = this.boardEl.clientWidth;
+        const h = this.boardEl.clientHeight;
+        this.blockSize = Math.floor(w / GameConfig.cols);
+    }
+
+    drawGridLines() {
+        for (let c = 1; c < GameConfig.cols; c++) {
+            let line = document.createElement('div');
+            line.className = 'grid-line-v';
+            line.style.left = (c * this.blockSize) + 'px';
+            this.boardEl.appendChild(line);
+        }
+        for (let r = 1; r < GameConfig.rows; r++) {
+            let line = document.createElement('div');
+            line.className = 'grid-line-h';
+            line.style.top = (r * this.blockSize) + 'px';
+            this.boardEl.appendChild(line);
+        }
+    }
+
+    // --- ゲームロジック ---
+    spawnBlock(instant = false) {
+        if (this.isGameOver || this.isPaused) return;
+
+        const col = Math.floor(Math.random() * GameConfig.cols);
+        
+        if (this.grid[0][col] !== null) {
+            this.gameOver();
+            return;
+        }
+
+        const val = Math.floor(Math.random() * 9) + 1;
+
+        const block = new Block(this.nextId++, val, col, 0);
+        
+        const el = document.createElement('div');
+        el.className = `block num-${val}`;
+        el.innerText = val;
+        el.style.width = (this.blockSize - 4) + 'px'; 
+        el.style.height = (this.blockSize - 4) + 'px';
+        
+        // タップイベント
+        const clickHandler = (e) => {
+            e.preventDefault();
+            this.onBlockClick(block);
+        };
+        el.addEventListener('mousedown', clickHandler);
+        el.addEventListener('touchstart', clickHandler, {passive: false});
+
+        this.boardEl.appendChild(el);
+        block.el = el;
+
+        this.grid[0][col] = block;
+        this.blocks.push(block);
+
+        this.updateBlockPosition(block);
+
+        if (instant) {
+            let dropRow = 0;
+            while(dropRow < GameConfig.rows - 1 && this.grid[dropRow+1][col] === null) {
+                this.grid[dropRow][col] = null;
+                dropRow++;
+                this.grid[dropRow][col] = block;
+                block.row = dropRow;
+            }
+            this.updateBlockPosition(block);
+        }
+    }
+
+    applyGravity() {
+        if (this.isPaused) return;
+
+        let moved = false;
+        for (let r = GameConfig.rows - 2; r >= 0; r--) {
+            for (let c = 0; c < GameConfig.cols; c++) {
+                const block = this.grid[r][c];
+                if (block) {
+                    if (this.grid[r+1][c] === null) {
+                        this.grid[r][c] = null;    
+                        this.grid[r+1][c] = block;  
+                        block.row += 1;
+                        this.updateBlockPosition(block);
+                        moved = true;
+                    }
+                }
+            }
+        }
+    }
+
+    updateBlockPosition(block) {
+        if(!block.el) return;
+        block.el.style.left = (block.col * this.blockSize + 2) + 'px';
+        block.el.style.top = (block.row * this.blockSize + 2) + 'px';
+    }
+
+    onBlockClick(block) {
+        if (this.isGameOver || this.isPaused) return;
+
+        block.selected = !block.selected;
+        
+        if (block.selected) {
+            block.el.classList.add('selected');
+        } else {
+            block.el.classList.remove('selected');
+        }
+
+        this.checkSum();
+    }
+
+    checkSum() {
+        const selected = this.blocks.filter(b => b.selected);
+        const sum = selected.reduce((acc, b) => acc + b.val, 0);
+
+        this.sumEl.innerText = sum;
+        this.sumEl.className = ''; 
+
+        if (sum === 10) {
+            this.sumEl.classList.add('valid');
+            this.score += (selected.length * 10) + (selected.length > 2 ? 50 : 0); 
+            
+            setTimeout(() => {
+                this.removeBlocks(selected);
+                this.sumEl.innerText = 0;
+                this.sumEl.className = '';
+                this.checkLevelUp();
+            }, 150);
+
+        } else if (sum > 10) {
+            this.sumEl.classList.add('invalid');
+            
+            setTimeout(() => {
+                selected.forEach(b => {
+                    b.selected = false;
+                    if(b.el) b.el.classList.remove('selected');
+                });
+                this.sumEl.innerText = 0;
+                this.sumEl.className = '';
+            }, 400);
+        }
+    }
+
+    removeBlocks(targets) {
+        targets.forEach(b => {
+            if(this.grid[b.row][b.col] === b) {
+                this.grid[b.row][b.col] = null;
+            }
+            this.blocks = this.blocks.filter(item => item !== b);
+            
+            if(b.el) {
+                b.el.classList.add('poof');
+                setTimeout(() => b.el.remove(), 300);
+            }
+        });
+        
+        this.updateUI();
+    }
+
+    checkLevelUp() {
+        const newLevel = Math.floor(this.score / 500) + 1;
+        if (newLevel > this.level) {
+            this.level = newLevel;
+            this.startTimers(); 
+            
+            this.boardEl.style.backgroundColor = '#dff9fb';
+            setTimeout(() => this.boardEl.style.backgroundColor = '#ecf0f1', 200);
+        }
+        this.updateUI();
+    }
+
+    updateUI() {
+        this.scoreEl.innerText = this.score;
+        this.levelEl.innerText = this.level;
+    }
+
+    gameOver() {
+        this.isGameOver = true;
+        this.stopTimers();
+        
+        this.boardEl.classList.add('danger-zone');
+        
+        document.getElementById('title-text').innerText = "GAME OVER";
+        document.getElementById('msg-text').innerHTML = `SCORE: <strong>${this.score}</strong><br>LEVEL: ${this.level}`;
+        this.startOverlay.style.display = 'flex';
+    }
+}
+
+const game = new TenDropGame();
+
+</script>
+</body>
+</html>
