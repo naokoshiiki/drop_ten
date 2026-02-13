@@ -12,7 +12,7 @@
             background-color: #2c3e50;
             font-family: 'Verdana', sans-serif;
             color: white;
-            touch-action: manipulation; /* スマホでの操作性向上 */
+            touch-action: manipulation;
         }
 
         #game-wrapper {
@@ -27,26 +27,26 @@
             flex-direction: column;
         }
 
-        /* --- ヘッダー（スコア・情報） --- */
+        /* --- ヘッダー --- */
         #header {
             height: 60px;
             background: #2c3e50;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 20px;
+            padding: 0 15px;
             border-bottom: 3px solid #7f8c8d;
             z-index: 10;
         }
 
-        .header-left { display: flex; align-items: center; gap: 15px; }
-        .info-label { font-size: 14px; color: #bdc3c7; }
+        .header-left { display: flex; align-items: center; gap: 10px; }
+        .info-label { font-size: 12px; color: #bdc3c7; }
         .info-value { font-size: 24px; font-weight: bold; }
 
-        /* 現在の合計表示（重要） */
+        /* 合計表示 */
         #sum-indicator {
             background-color: #95a5a6;
-            width: 80px;
+            width: 70px;
             height: 40px;
             border-radius: 20px;
             display: flex;
@@ -56,15 +56,15 @@
             font-weight: bold;
             transition: all 0.2s;
         }
-        #sum-indicator.valid { background-color: #2ecc71; transform: scale(1.1); box-shadow: 0 0 10px #2ecc71; } /* 合計10 */
-        #sum-indicator.invalid { background-color: #e74c3c; animation: shake 0.3s; } /* オーバー */
+        #sum-indicator.valid { background-color: #2ecc71; transform: scale(1.1); box-shadow: 0 0 10px #2ecc71; }
+        #sum-indicator.invalid { background-color: #e74c3c; animation: shake 0.3s; }
 
-        /* 一時停止ボタン */
-        #pause-btn {
+        /* アイコンボタン（ポーズ・ヘルプ） */
+        .icon-btn {
             margin: 0;
             padding: 0;
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             border: 2px solid #bdc3c7;
             background: transparent;
@@ -74,13 +74,13 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            box-shadow: none;
             transition: all 0.2s;
+            font-weight: bold;
         }
-        #pause-btn:hover { border-color: white; color: white; }
-        #pause-btn:active { transform: scale(0.9); }
+        .icon-btn:hover { border-color: white; color: white; }
+        .icon-btn:active { transform: scale(0.9); }
 
-        /* --- ゲーム盤（グリッド） --- */
+        /* --- ゲーム盤 --- */
         #board-container {
             flex-grow: 1;
             position: relative;
@@ -88,37 +88,23 @@
             overflow: hidden;
             cursor: pointer;
         }
-
-        /* グリッドの線（背景として描画） */
         .grid-line-v { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(0,0,0,0.1); }
         .grid-line-h { position: absolute; left: 0; right: 0; height: 1px; background: rgba(0,0,0,0.1); }
 
-        /* --- 数字ブロック --- */
+        /* --- ブロック --- */
         .block {
             position: absolute;
-            width: 50px; /* JSで動的に調整 */
-            height: 50px;
+            width: 50px; height: 50px;
             border-radius: 8px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 34px; 
-            font-weight: 800;
-            color: white;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 34px; font-weight: 800; color: white;
             box-sizing: border-box;
             box-shadow: inset 0 -4px 0 rgba(0,0,0,0.2);
             transition: top 0.2s ease-in, transform 0.1s;
-            user-select: none;
-            z-index: 5;
+            user-select: none; z-index: 5;
             text-shadow: 1px 1px 0 rgba(0,0,0,0.2);
         }
-
-        .block.selected {
-            border: 4px solid #f1c40f;
-            transform: scale(0.9);
-            z-index: 10;
-        }
-
+        .block.selected { border: 4px solid #f1c40f; transform: scale(0.9); z-index: 10; }
         .num-1 { background-color: #3498db; }
         .num-2 { background-color: #e67e22; }
         .num-3 { background-color: #2ecc71; }
@@ -130,60 +116,68 @@
         .num-9 { background-color: #7f8c8d; }
 
         .poof { animation: poofAnim 0.3s forwards; }
-        @keyframes poofAnim {
-            0% { transform: scale(1); opacity: 1; }
-            100% { transform: scale(1.5); opacity: 0; }
-        }
+        @keyframes poofAnim { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(1.5); opacity: 0; } }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25%, 75% { transform: translateX(-5px); } 50% { transform: translateX(5px); } }
 
-        @keyframes shake {
-            0% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            50% { transform: translateX(5px); }
-            75% { transform: translateX(-5px); }
-            100% { transform: translateX(0); }
-        }
-
-        /* --- オーバーレイ（共通デザイン） --- */
+        /* --- オーバーレイ --- */
         .overlay-screen {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(44, 62, 80, 0.95);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
             z-index: 100;
         }
-        
-        /* ポーズ画面は少し薄く */
-        #pause-overlay {
-            background: rgba(44, 62, 80, 0.85); 
-            z-index: 90;
-            display: none; /* 初期は非表示 */
-        }
-
         h1 { color: #f1c40f; font-size: 48px; margin: 0 0 20px 0; text-shadow: 3px 3px 0 #000; letter-spacing: 2px;}
-        h2 { color: #ecf0f1; font-size: 40px; margin: 0 0 20px 0; letter-spacing: 2px; }
         p { font-size: 18px; margin: 10px; text-align: center; line-height: 1.6; color: #ecf0f1; }
         
         .main-btn {
-            margin-top: 30px;
-            padding: 15px 50px;
-            font-size: 24px;
-            font-weight: bold;
-            background: #27ae60;
-            color: white;
-            border: none;
-            border-radius: 50px;
-            cursor: pointer;
-            box-shadow: 0 6px 0 #219150;
+            margin-top: 30px; padding: 15px 50px;
+            font-size: 24px; font-weight: bold;
+            background: #27ae60; color: white;
+            border: none; border-radius: 50px;
+            cursor: pointer; box-shadow: 0 6px 0 #219150;
             transition: transform 0.1s;
         }
         .main-btn:active { transform: translateY(6px); box-shadow: none; }
+        .danger-zone { background-color: rgba(231, 76, 60, 0.2) !important; }
 
-        .danger-zone {
-            background-color: rgba(231, 76, 60, 0.2) !important;
+        /* --- チュートリアル --- */
+        #tutorial-overlay { z-index: 200; display: none; background: rgba(30, 40, 50, 0.98); }
+        .tut-container {
+            width: 85%; max-width: 400px;
+            background: white; color: #333;
+            border-radius: 15px; padding: 20px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
         }
+        .tut-slide { display: none; animation: fadeIn 0.3s; }
+        .tut-slide.active { display: block; }
+        .tut-image {
+            height: 150px; background: #ecf0f1; margin: 15px 0;
+            border-radius: 10px; display: flex; justify-content: center; align-items: center;
+            font-size: 60px; position: relative; overflow: hidden;
+        }
+        .tut-title { font-size: 24px; font-weight: bold; color: #2c3e50; margin-bottom: 10px; }
+        .tut-desc { font-size: 16px; color: #7f8c8d; line-height: 1.6; }
+        .tut-nav {
+            display: flex; justify-content: space-between; margin-top: 20px;
+        }
+        .tut-btn {
+            padding: 10px 20px; border: none; border-radius: 5px;
+            font-weight: bold; cursor: pointer; background: #bdc3c7; color: white;
+        }
+        .tut-btn-next { background: #3498db; }
+        
+        /* チュートリアル内のビジュアル作成用 */
+        .mini-block {
+            width: 50px; height: 50px; background: #e67e22; color: white;
+            border-radius: 8px; font-size: 28px; font-weight: bold;
+            display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+        }
+        .mini-block.sel { border: 3px solid #f1c40f; transform: scale(0.9); }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     </style>
 </head>
@@ -197,7 +191,8 @@
                 <div class="info-label">SCORE</div>
                 <div class="info-value" id="score-display">0</div>
             </div>
-            <button id="pause-btn" onclick="game.togglePause()">❚❚</button>
+            <button id="pause-btn" class="icon-btn" onclick="game.togglePause()">❚❚</button>
+            <button id="help-btn" class="icon-btn" onclick="game.openTutorial()">?</button>
         </div>
         
         <div>
@@ -212,25 +207,93 @@
     </div>
 
     <!-- ゲーム盤 -->
-    <div id="board-container">
-        <!-- グリッド線とブロックはJSで生成 -->
+    <div id="board-container"></div>
+
+    <!-- チュートリアル画面 -->
+    <div id="tutorial-overlay" class="overlay-screen">
+        <div class="tut-container">
+            <!-- Slide 1 -->
+            <div class="tut-slide active" id="ts-1">
+                <div class="tut-title">ルール</div>
+                <div class="tut-image">
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <div class="mini-block" style="background:#2ecc71">3</div>
+                        <div style="color:#333; font-size:30px;">+</div>
+                        <div class="mini-block" style="background:#e74c3c">7</div>
+                    </div>
+                </div>
+                <div class="tut-desc">
+                    落ちてくる数字を足して<br>
+                    <strong>「10」</strong>を作りましょう！
+                </div>
+            </div>
+            <!-- Slide 2 -->
+            <div class="tut-slide" id="ts-2">
+                <div class="tut-title">操作方法</div>
+                <div class="tut-image">
+                    <div style="display:flex; gap:10px;">
+                        <div class="mini-block sel" style="background:#3498db">2</div>
+                        <div class="mini-block" style="background:#9b59b6">4</div>
+                        <div class="mini-block sel" style="background:#34495e">8</div>
+                    </div>
+                    <div style="position:absolute; bottom:10px; right:60px; font-size:30px;">👆</div>
+                </div>
+                <div class="tut-desc">
+                    ブロックを<strong>タップ</strong>して選びます。<br>
+                    離れているブロックでもOK！
+                </div>
+            </div>
+            <!-- Slide 3 -->
+            <div class="tut-slide" id="ts-3">
+                <div class="tut-title">成功と失敗</div>
+                <div class="tut-image" style="flex-direction:column; font-size:20px; color:#555;">
+                    <div style="margin-bottom:10px;">合計 <span style="color:#2ecc71; font-weight:bold;">10</span> 👉 <span style="color:#2ecc71;">消える！✨</span></div>
+                    <div>合計 <span style="color:#e74c3c; font-weight:bold;">11以上</span> 👉 <span style="color:#e74c3c;">やり直し💦</span></div>
+                </div>
+                <div class="tut-desc">
+                    合計が10ぴったりになると消えます。<br>
+                    超えてしまうと選択が解除されます。
+                </div>
+            </div>
+            <!-- Slide 4 -->
+            <div class="tut-slide" id="ts-4">
+                <div class="tut-title">ゲームオーバー</div>
+                <div class="tut-image">
+                    <div style="display:flex; flex-direction:column; align-items:center; gap:2px;">
+                        <div class="mini-block" style="background:#e74c3c; width:40px; height:40px;"></div>
+                        <div class="mini-block" style="background:#3498db; width:40px; height:40px;"></div>
+                        <div class="mini-block" style="background:#f1c40f; width:40px; height:40px;"></div>
+                    </div>
+                    <div style="position:absolute; top:10px; color:#e74c3c; font-weight:bold;">☠️ 満タン注意</div>
+                </div>
+                <div class="tut-desc">
+                    ブロックが一番上まで<br>積み上がるとゲームオーバーです。
+                </div>
+            </div>
+
+            <div class="tut-nav">
+                <button class="tut-btn" id="tut-prev-btn" onclick="game.prevSlide()">戻る</button>
+                <div style="flex-grow:1"></div>
+                <button class="tut-btn tut-btn-next" id="tut-next-btn" onclick="game.nextSlide()">次へ</button>
+            </div>
+        </div>
     </div>
 
     <!-- ポーズ画面 -->
-    <div id="pause-overlay" class="overlay-screen">
+    <div id="pause-overlay" class="overlay-screen" style="display:none; background:rgba(44,62,80,0.85); z-index:90;">
         <h2>PAUSED</h2>
-        <button class="main-btn" onclick="game.togglePause()">RESUME</button>
+        <button class="main-btn" onclick="game.togglePause()">再開する</button>
     </div>
 
-    <!-- スタート/ゲームオーバー画面 -->
+    <!-- スタート画面 -->
     <div id="start-overlay" class="overlay-screen">
         <h1 id="title-text">TEN DROP</h1>
         <p id="msg-text">
             落ちてくる数字をタップして<br>
-            合計 <strong>10</strong> を作って消そう！<br>
-            <span style="font-size:14px; color:#95a5a6; display:block; margin-top:10px;">(例: 7+3, 5+5, 1+2+7)</span>
+            合計 <strong>10</strong> を作ろう！
         </p>
         <button class="main-btn" onclick="game.start()">START</button>
+        <button class="main-btn" style="background:#3498db; margin-top:15px; font-size:18px; padding:10px 30px;" onclick="game.openTutorial()">遊び方を見る</button>
     </div>
 </div>
 
@@ -238,23 +301,15 @@
 /**
  * TEN DROP Game Logic
  */
-
 const GameConfig = {
-    cols: 6,
-    rows: 9,
-    baseSpawnRate: 3000, 
-    minSpawnRate: 800,   
-    gravityRate: 400,    
+    cols: 6, rows: 9,
+    baseSpawnRate: 3000, minSpawnRate: 800, gravityRate: 400,
 };
 
 class Block {
     constructor(id, val, col, row) {
-        this.id = id;
-        this.val = val;
-        this.col = col;
-        this.row = row; 
-        this.el = null; 
-        this.selected = false;
+        this.id = id; this.val = val; this.col = col; this.row = row;
+        this.el = null; this.selected = false;
     }
 }
 
@@ -266,38 +321,83 @@ class TenDropGame {
         this.sumEl = document.getElementById('sum-indicator');
         this.startOverlay = document.getElementById('start-overlay');
         this.pauseOverlay = document.getElementById('pause-overlay');
+        this.tutOverlay = document.getElementById('tutorial-overlay');
         this.pauseBtn = document.getElementById('pause-btn');
         
-        this.grid = [];
-        this.blocks = []; 
-        this.nextId = 1;
-        
-        this.score = 0;
-        this.level = 1;
-        this.spawnTimer = null;
-        this.gravityTimer = null;
-        this.isGameOver = false;
-        this.isPaused = false;
+        this.grid = []; this.blocks = []; this.nextId = 1;
+        this.score = 0; this.level = 1;
+        this.spawnTimer = null; this.gravityTimer = null;
+        this.isGameOver = false; this.isPaused = false;
         
         this.blockSize = 0; 
+        this.tutStep = 1; // チュートリアルの現在ページ
+        this.maxTutSteps = 4;
         
         window.addEventListener('resize', () => this.resizeBoard());
     }
 
-    // --- 初期化と開始 ---
-    start() {
-        this.score = 0;
-        this.level = 1;
-        this.isGameOver = false;
-        this.isPaused = false;
-        this.nextId = 1;
-        this.blocks = [];
+    // --- チュートリアル制御 ---
+    openTutorial() {
+        // ゲーム中ならポーズする
+        if (!this.isGameOver && this.startOverlay.style.display === 'none') {
+            if(!this.isPaused) this.togglePause();
+        }
         
+        this.tutStep = 1;
+        this.updateTutSlides();
+        this.tutOverlay.style.display = 'flex';
+    }
+
+    closeTutorial() {
+        this.tutOverlay.style.display = 'none';
+    }
+
+    nextSlide() {
+        if(this.tutStep < this.maxTutSteps) {
+            this.tutStep++;
+            this.updateTutSlides();
+        } else {
+            this.closeTutorial();
+        }
+    }
+
+    prevSlide() {
+        if(this.tutStep > 1) {
+            this.tutStep--;
+            this.updateTutSlides();
+        }
+    }
+
+    updateTutSlides() {
+        // 全スライド非表示
+        for(let i=1; i<=this.maxTutSteps; i++) {
+            document.getElementById(`ts-${i}`).classList.remove('active');
+        }
+        // 現在のスライド表示
+        document.getElementById(`ts-${this.tutStep}`).classList.add('active');
+
+        // ボタン制御
+        const prevBtn = document.getElementById('tut-prev-btn');
+        const nextBtn = document.getElementById('tut-next-btn');
+
+        if(this.tutStep === 1) prevBtn.style.visibility = 'hidden';
+        else prevBtn.style.visibility = 'visible';
+
+        if(this.tutStep === this.maxTutSteps) nextBtn.innerText = "閉じる";
+        else nextBtn.innerText = "次へ";
+    }
+
+    // --- ゲーム開始 ---
+    start() {
+        this.score = 0; this.level = 1;
+        this.isGameOver = false; this.isPaused = false;
+        this.nextId = 1; this.blocks = [];
         this.grid = Array(GameConfig.rows).fill(null).map(() => Array(GameConfig.cols).fill(null));
 
         this.updateUI();
         this.startOverlay.style.display = 'none';
         this.pauseOverlay.style.display = 'none';
+        this.tutOverlay.style.display = 'none';
         this.boardEl.innerHTML = ''; 
         this.boardEl.classList.remove('danger-zone');
         this.pauseBtn.innerText = '❚❚';
@@ -305,20 +405,13 @@ class TenDropGame {
         this.resizeBoard();
         this.drawGridLines();
 
-        for(let i=0; i<5; i++) {
-            this.spawnBlock(true); 
-        }
-
+        for(let i=0; i<5; i++) this.spawnBlock(true); 
         this.startTimers();
     }
 
-    // --- ポーズ機能 ---
     togglePause() {
-        // ゲーム中以外は反応しない
         if (this.isGameOver || this.startOverlay.style.display !== 'none') return;
-
         this.isPaused = !this.isPaused;
-
         if (this.isPaused) {
             this.stopTimers();
             this.pauseOverlay.style.display = 'flex';
@@ -331,10 +424,8 @@ class TenDropGame {
     }
 
     startTimers() {
-        this.stopTimers(); // 重複防止
-
+        this.stopTimers();
         let rate = Math.max(GameConfig.minSpawnRate, GameConfig.baseSpawnRate - (this.level * 150));
-        
         this.spawnTimer = setInterval(() => this.spawnBlock(), rate);
         this.gravityTimer = setInterval(() => this.applyGravity(), GameConfig.gravityRate);
     }
@@ -346,7 +437,6 @@ class TenDropGame {
 
     resizeBoard() {
         const w = this.boardEl.clientWidth;
-        const h = this.boardEl.clientHeight;
         this.blockSize = Math.floor(w / GameConfig.cols);
     }
 
@@ -365,19 +455,12 @@ class TenDropGame {
         }
     }
 
-    // --- ゲームロジック ---
     spawnBlock(instant = false) {
         if (this.isGameOver || this.isPaused) return;
-
         const col = Math.floor(Math.random() * GameConfig.cols);
-        
-        if (this.grid[0][col] !== null) {
-            this.gameOver();
-            return;
-        }
+        if (this.grid[0][col] !== null) { this.gameOver(); return; }
 
         const val = Math.floor(Math.random() * 9) + 1;
-
         const block = new Block(this.nextId++, val, col, 0);
         
         const el = document.createElement('div');
@@ -386,29 +469,21 @@ class TenDropGame {
         el.style.width = (this.blockSize - 4) + 'px'; 
         el.style.height = (this.blockSize - 4) + 'px';
         
-        // タップイベント
-        const clickHandler = (e) => {
-            e.preventDefault();
-            this.onBlockClick(block);
-        };
+        const clickHandler = (e) => { e.preventDefault(); this.onBlockClick(block); };
         el.addEventListener('mousedown', clickHandler);
         el.addEventListener('touchstart', clickHandler, {passive: false});
 
         this.boardEl.appendChild(el);
         block.el = el;
-
         this.grid[0][col] = block;
         this.blocks.push(block);
-
         this.updateBlockPosition(block);
 
         if (instant) {
             let dropRow = 0;
             while(dropRow < GameConfig.rows - 1 && this.grid[dropRow+1][col] === null) {
-                this.grid[dropRow][col] = null;
-                dropRow++;
-                this.grid[dropRow][col] = block;
-                block.row = dropRow;
+                this.grid[dropRow][col] = null; dropRow++;
+                this.grid[dropRow][col] = block; block.row = dropRow;
             }
             this.updateBlockPosition(block);
         }
@@ -416,19 +491,12 @@ class TenDropGame {
 
     applyGravity() {
         if (this.isPaused) return;
-
-        let moved = false;
         for (let r = GameConfig.rows - 2; r >= 0; r--) {
             for (let c = 0; c < GameConfig.cols; c++) {
                 const block = this.grid[r][c];
-                if (block) {
-                    if (this.grid[r+1][c] === null) {
-                        this.grid[r][c] = null;    
-                        this.grid[r+1][c] = block;  
-                        block.row += 1;
-                        this.updateBlockPosition(block);
-                        moved = true;
-                    }
+                if (block && this.grid[r+1][c] === null) {
+                    this.grid[r][c] = null; this.grid[r+1][c] = block;  
+                    block.row += 1; this.updateBlockPosition(block);
                 }
             }
         }
@@ -442,63 +510,40 @@ class TenDropGame {
 
     onBlockClick(block) {
         if (this.isGameOver || this.isPaused) return;
-
         block.selected = !block.selected;
-        
-        if (block.selected) {
-            block.el.classList.add('selected');
-        } else {
-            block.el.classList.remove('selected');
-        }
-
+        block.el.classList.toggle('selected', block.selected);
         this.checkSum();
     }
 
     checkSum() {
         const selected = this.blocks.filter(b => b.selected);
         const sum = selected.reduce((acc, b) => acc + b.val, 0);
-
         this.sumEl.innerText = sum;
         this.sumEl.className = ''; 
 
         if (sum === 10) {
             this.sumEl.classList.add('valid');
             this.score += (selected.length * 10) + (selected.length > 2 ? 50 : 0); 
-            
             setTimeout(() => {
                 this.removeBlocks(selected);
-                this.sumEl.innerText = 0;
-                this.sumEl.className = '';
+                this.sumEl.innerText = 0; this.sumEl.className = '';
                 this.checkLevelUp();
             }, 150);
-
         } else if (sum > 10) {
             this.sumEl.classList.add('invalid');
-            
             setTimeout(() => {
-                selected.forEach(b => {
-                    b.selected = false;
-                    if(b.el) b.el.classList.remove('selected');
-                });
-                this.sumEl.innerText = 0;
-                this.sumEl.className = '';
+                selected.forEach(b => { b.selected = false; if(b.el) b.el.classList.remove('selected'); });
+                this.sumEl.innerText = 0; this.sumEl.className = '';
             }, 400);
         }
     }
 
     removeBlocks(targets) {
         targets.forEach(b => {
-            if(this.grid[b.row][b.col] === b) {
-                this.grid[b.row][b.col] = null;
-            }
+            if(this.grid[b.row][b.col] === b) this.grid[b.row][b.col] = null;
             this.blocks = this.blocks.filter(item => item !== b);
-            
-            if(b.el) {
-                b.el.classList.add('poof');
-                setTimeout(() => b.el.remove(), 300);
-            }
+            if(b.el) { b.el.classList.add('poof'); setTimeout(() => b.el.remove(), 300); }
         });
-        
         this.updateUI();
     }
 
@@ -507,24 +552,17 @@ class TenDropGame {
         if (newLevel > this.level) {
             this.level = newLevel;
             this.startTimers(); 
-            
             this.boardEl.style.backgroundColor = '#dff9fb';
             setTimeout(() => this.boardEl.style.backgroundColor = '#ecf0f1', 200);
         }
         this.updateUI();
     }
 
-    updateUI() {
-        this.scoreEl.innerText = this.score;
-        this.levelEl.innerText = this.level;
-    }
+    updateUI() { this.scoreEl.innerText = this.score; this.levelEl.innerText = this.level; }
 
     gameOver() {
-        this.isGameOver = true;
-        this.stopTimers();
-        
+        this.isGameOver = true; this.stopTimers();
         this.boardEl.classList.add('danger-zone');
-        
         document.getElementById('title-text').innerText = "GAME OVER";
         document.getElementById('msg-text').innerHTML = `SCORE: <strong>${this.score}</strong><br>LEVEL: ${this.level}`;
         this.startOverlay.style.display = 'flex';
@@ -532,7 +570,6 @@ class TenDropGame {
 }
 
 const game = new TenDropGame();
-
 </script>
 </body>
 </html>
