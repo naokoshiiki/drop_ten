@@ -29,7 +29,7 @@
 
         /* --- ヘッダー --- */
         #header {
-            height: 60px;
+            height: 70px; /* 少し高くしてバーを入れる */
             background: #2c3e50;
             display: flex;
             justify-content: space-between;
@@ -37,11 +37,37 @@
             padding: 0 15px;
             border-bottom: 3px solid #7f8c8d;
             z-index: 10;
+            position: relative;
         }
 
         .header-left { display: flex; align-items: center; gap: 10px; }
-        .info-label { font-size: 12px; color: #bdc3c7; }
-        .info-value { font-size: 24px; font-weight: bold; }
+        .info-label { font-size: 11px; color: #bdc3c7; }
+        .info-value { font-size: 20px; font-weight: bold; }
+
+        /* スコアとプログレスバーのコンテナ */
+        .score-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            width: 100px;
+        }
+        
+        /* プログレスバー背景 */
+        .progress-bg {
+            width: 100%;
+            height: 6px;
+            background: #34495e;
+            border-radius: 3px;
+            margin-top: 2px;
+            overflow: hidden;
+        }
+        /* プログレスバー中身 */
+        #progress-fill {
+            width: 0%;
+            height: 100%;
+            background: #f1c40f;
+            transition: width 0.3s ease-out;
+        }
 
         /* 合計表示 */
         #sum-indicator {
@@ -59,23 +85,14 @@
         #sum-indicator.valid { background-color: #2ecc71; transform: scale(1.1); box-shadow: 0 0 10px #2ecc71; }
         #sum-indicator.invalid { background-color: #e74c3c; animation: shake 0.3s; }
 
-        /* アイコンボタン（ポーズ・ヘルプ） */
+        /* アイコンボタン */
         .icon-btn {
-            margin: 0;
-            padding: 0;
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            border: 2px solid #bdc3c7;
-            background: transparent;
-            color: #bdc3c7;
-            font-size: 16px;
-            cursor: pointer;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            transition: all 0.2s;
-            font-weight: bold;
+            margin: 0; padding: 0; width: 36px; height: 36px;
+            border-radius: 50%; border: 2px solid #bdc3c7;
+            background: transparent; color: #bdc3c7;
+            font-size: 16px; cursor: pointer;
+            display: flex; justify-content: center; align-items: center;
+            transition: all 0.2s; font-weight: bold;
         }
         .icon-btn:hover { border-color: white; color: white; }
         .icon-btn:active { transform: scale(0.9); }
@@ -140,6 +157,11 @@
         }
         .main-btn:active { transform: translateY(6px); box-shadow: none; }
         .danger-zone { background-color: rgba(231, 76, 60, 0.2) !important; }
+        
+        /* クリア画面の特別演出 */
+        #clear-overlay { background: rgba(39, 174, 96, 0.95); }
+        .clear-title { color: #fff; font-size: 60px; text-shadow: 0 0 20px #f1c40f; animation: pulse 1s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
 
         /* --- チュートリアル --- */
         #tutorial-overlay { z-index: 200; display: none; background: rgba(30, 40, 50, 0.98); }
@@ -159,16 +181,9 @@
         }
         .tut-title { font-size: 24px; font-weight: bold; color: #2c3e50; margin-bottom: 10px; }
         .tut-desc { font-size: 16px; color: #7f8c8d; line-height: 1.6; }
-        .tut-nav {
-            display: flex; justify-content: space-between; margin-top: 20px;
-        }
-        .tut-btn {
-            padding: 10px 20px; border: none; border-radius: 5px;
-            font-weight: bold; cursor: pointer; background: #bdc3c7; color: white;
-        }
+        .tut-nav { display: flex; justify-content: space-between; margin-top: 20px; }
+        .tut-btn { padding: 10px 20px; border: none; border-radius: 5px; font-weight: bold; cursor: pointer; background: #bdc3c7; color: white; }
         .tut-btn-next { background: #3498db; }
-        
-        /* チュートリアル内のビジュアル作成用 */
         .mini-block {
             width: 50px; height: 50px; background: #e67e22; color: white;
             border-radius: 8px; font-size: 28px; font-weight: bold;
@@ -176,7 +191,6 @@
             box-shadow: 0 4px 0 rgba(0,0,0,0.2);
         }
         .mini-block.sel { border: 3px solid #f1c40f; transform: scale(0.9); }
-
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     </style>
@@ -187,9 +201,15 @@
     <!-- ヘッダー -->
     <div id="header">
         <div class="header-left">
-            <div>
-                <div class="info-label">SCORE</div>
-                <div class="info-value" id="score-display">0</div>
+            <div class="score-container">
+                <div class="info-label">GOAL: 1000</div>
+                <div style="display:flex; justify-content:space-between; align-items:baseline;">
+                    <div class="info-value" id="score-display">0</div>
+                    <div class="info-label">pts</div>
+                </div>
+                <div class="progress-bg">
+                    <div id="progress-fill"></div>
+                </div>
             </div>
             <button id="pause-btn" class="icon-btn" onclick="game.togglePause()">❚❚</button>
             <button id="help-btn" class="icon-btn" onclick="game.openTutorial()">?</button>
@@ -245,14 +265,16 @@
             </div>
             <!-- Slide 3 -->
             <div class="tut-slide" id="ts-3">
-                <div class="tut-title">成功と失敗</div>
-                <div class="tut-image" style="flex-direction:column; font-size:20px; color:#555;">
-                    <div style="margin-bottom:10px;">合計 <span style="color:#2ecc71; font-weight:bold;">10</span> 👉 <span style="color:#2ecc71;">消える！✨</span></div>
-                    <div>合計 <span style="color:#e74c3c; font-weight:bold;">11以上</span> 👉 <span style="color:#e74c3c;">やり直し💦</span></div>
+                <div class="tut-title">ゴール</div>
+                <div class="tut-image" style="flex-direction:column; justify-content:center;">
+                   <div style="font-size:24px; font-weight:bold; color:#f1c40f;">Target: 1000pts</div>
+                   <div style="width:80%; height:10px; background:#bdc3c7; border-radius:5px; margin-top:10px; overflow:hidden;">
+                       <div style="width:70%; height:100%; background:#f1c40f;"></div>
+                   </div>
                 </div>
                 <div class="tut-desc">
-                    合計が10ぴったりになると消えます。<br>
-                    超えてしまうと選択が解除されます。
+                    スコアをためて<br>
+                    <strong>1000点</strong>を目指そう！
                 </div>
             </div>
             <!-- Slide 4 -->
@@ -284,13 +306,21 @@
         <h2>PAUSED</h2>
         <button class="main-btn" onclick="game.togglePause()">再開する</button>
     </div>
+    
+    <!-- クリア画面 -->
+    <div id="clear-overlay" class="overlay-screen" style="display:none;">
+        <h1 class="clear-title">CLEAR!!</h1>
+        <p style="font-size:24px; font-weight:bold;">おめでとう！</p>
+        <p id="clear-msg-text" style="font-size:18px; margin-top:0;">ゴール達成！</p>
+        <button class="main-btn" style="background:#fff; color:#27ae60;" onclick="game.start()">もう一度遊ぶ</button>
+    </div>
 
     <!-- スタート画面 -->
     <div id="start-overlay" class="overlay-screen">
         <h1 id="title-text">TEN DROP</h1>
         <p id="msg-text">
-            落ちてくる数字をタップして<br>
-            合計 <strong>10</strong> を作ろう！
+            10を作ってスコアを稼げ！<br>
+            目標: <strong>1000点</strong>
         </p>
         <button class="main-btn" onclick="game.start()">START</button>
         <button class="main-btn" style="background:#3498db; margin-top:15px; font-size:18px; padding:10px 30px;" onclick="game.openTutorial()">遊び方を見る</button>
@@ -304,6 +334,7 @@
 const GameConfig = {
     cols: 6, rows: 9,
     baseSpawnRate: 3000, minSpawnRate: 800, gravityRate: 400,
+    targetScore: 1000 // ★ゴールスコア
 };
 
 class Block {
@@ -319,8 +350,11 @@ class TenDropGame {
         this.scoreEl = document.getElementById('score-display');
         this.levelEl = document.getElementById('level-display');
         this.sumEl = document.getElementById('sum-indicator');
+        this.progressFill = document.getElementById('progress-fill'); // ★プログレスバー
+        
         this.startOverlay = document.getElementById('start-overlay');
         this.pauseOverlay = document.getElementById('pause-overlay');
+        this.clearOverlay = document.getElementById('clear-overlay'); // ★クリア画面
         this.tutOverlay = document.getElementById('tutorial-overlay');
         this.pauseBtn = document.getElementById('pause-btn');
         
@@ -330,61 +364,33 @@ class TenDropGame {
         this.isGameOver = false; this.isPaused = false;
         
         this.blockSize = 0; 
-        this.tutStep = 1; // チュートリアルの現在ページ
+        this.tutStep = 1; 
         this.maxTutSteps = 4;
         
         window.addEventListener('resize', () => this.resizeBoard());
     }
 
-    // --- チュートリアル制御 ---
+    // --- チュートリアル ---
     openTutorial() {
-        // ゲーム中ならポーズする
-        if (!this.isGameOver && this.startOverlay.style.display === 'none') {
+        if (!this.isGameOver && this.startOverlay.style.display === 'none' && this.clearOverlay.style.display === 'none') {
             if(!this.isPaused) this.togglePause();
         }
-        
-        this.tutStep = 1;
-        this.updateTutSlides();
+        this.tutStep = 1; this.updateTutSlides();
         this.tutOverlay.style.display = 'flex';
     }
-
-    closeTutorial() {
-        this.tutOverlay.style.display = 'none';
-    }
-
+    closeTutorial() { this.tutOverlay.style.display = 'none'; }
     nextSlide() {
-        if(this.tutStep < this.maxTutSteps) {
-            this.tutStep++;
-            this.updateTutSlides();
-        } else {
-            this.closeTutorial();
-        }
+        if(this.tutStep < this.maxTutSteps) { this.tutStep++; this.updateTutSlides(); }
+        else { this.closeTutorial(); }
     }
-
-    prevSlide() {
-        if(this.tutStep > 1) {
-            this.tutStep--;
-            this.updateTutSlides();
-        }
-    }
-
+    prevSlide() { if(this.tutStep > 1) { this.tutStep--; this.updateTutSlides(); } }
     updateTutSlides() {
-        // 全スライド非表示
-        for(let i=1; i<=this.maxTutSteps; i++) {
-            document.getElementById(`ts-${i}`).classList.remove('active');
-        }
-        // 現在のスライド表示
+        for(let i=1; i<=this.maxTutSteps; i++) document.getElementById(`ts-${i}`).classList.remove('active');
         document.getElementById(`ts-${this.tutStep}`).classList.add('active');
-
-        // ボタン制御
         const prevBtn = document.getElementById('tut-prev-btn');
         const nextBtn = document.getElementById('tut-next-btn');
-
-        if(this.tutStep === 1) prevBtn.style.visibility = 'hidden';
-        else prevBtn.style.visibility = 'visible';
-
-        if(this.tutStep === this.maxTutSteps) nextBtn.innerText = "閉じる";
-        else nextBtn.innerText = "次へ";
+        if(this.tutStep === 1) prevBtn.style.visibility = 'hidden'; else prevBtn.style.visibility = 'visible';
+        if(this.tutStep === this.maxTutSteps) nextBtn.innerText = "閉じる"; else nextBtn.innerText = "次へ";
     }
 
     // --- ゲーム開始 ---
@@ -397,6 +403,7 @@ class TenDropGame {
         this.updateUI();
         this.startOverlay.style.display = 'none';
         this.pauseOverlay.style.display = 'none';
+        this.clearOverlay.style.display = 'none';
         this.tutOverlay.style.display = 'none';
         this.boardEl.innerHTML = ''; 
         this.boardEl.classList.remove('danger-zone');
@@ -410,7 +417,7 @@ class TenDropGame {
     }
 
     togglePause() {
-        if (this.isGameOver || this.startOverlay.style.display !== 'none') return;
+        if (this.isGameOver || this.startOverlay.style.display !== 'none' || this.clearOverlay.style.display !== 'none') return;
         this.isPaused = !this.isPaused;
         if (this.isPaused) {
             this.stopTimers();
@@ -429,29 +436,16 @@ class TenDropGame {
         this.spawnTimer = setInterval(() => this.spawnBlock(), rate);
         this.gravityTimer = setInterval(() => this.applyGravity(), GameConfig.gravityRate);
     }
-
-    stopTimers() {
-        if(this.spawnTimer) clearInterval(this.spawnTimer);
-        if(this.gravityTimer) clearInterval(this.gravityTimer);
-    }
-
-    resizeBoard() {
-        const w = this.boardEl.clientWidth;
-        this.blockSize = Math.floor(w / GameConfig.cols);
-    }
-
+    stopTimers() { if(this.spawnTimer) clearInterval(this.spawnTimer); if(this.gravityTimer) clearInterval(this.gravityTimer); }
+    resizeBoard() { const w = this.boardEl.clientWidth; this.blockSize = Math.floor(w / GameConfig.cols); }
     drawGridLines() {
         for (let c = 1; c < GameConfig.cols; c++) {
-            let line = document.createElement('div');
-            line.className = 'grid-line-v';
-            line.style.left = (c * this.blockSize) + 'px';
-            this.boardEl.appendChild(line);
+            let line = document.createElement('div'); line.className = 'grid-line-v';
+            line.style.left = (c * this.blockSize) + 'px'; this.boardEl.appendChild(line);
         }
         for (let r = 1; r < GameConfig.rows; r++) {
-            let line = document.createElement('div');
-            line.className = 'grid-line-h';
-            line.style.top = (r * this.blockSize) + 'px';
-            this.boardEl.appendChild(line);
+            let line = document.createElement('div'); line.className = 'grid-line-h';
+            line.style.top = (r * this.blockSize) + 'px'; this.boardEl.appendChild(line);
         }
     }
 
@@ -463,27 +457,19 @@ class TenDropGame {
         const val = Math.floor(Math.random() * 9) + 1;
         const block = new Block(this.nextId++, val, col, 0);
         
-        const el = document.createElement('div');
-        el.className = `block num-${val}`;
-        el.innerText = val;
-        el.style.width = (this.blockSize - 4) + 'px'; 
-        el.style.height = (this.blockSize - 4) + 'px';
-        
+        const el = document.createElement('div'); el.className = `block num-${val}`; el.innerText = val;
+        el.style.width = (this.blockSize - 4) + 'px'; el.style.height = (this.blockSize - 4) + 'px';
         const clickHandler = (e) => { e.preventDefault(); this.onBlockClick(block); };
-        el.addEventListener('mousedown', clickHandler);
-        el.addEventListener('touchstart', clickHandler, {passive: false});
+        el.addEventListener('mousedown', clickHandler); el.addEventListener('touchstart', clickHandler, {passive: false});
 
-        this.boardEl.appendChild(el);
-        block.el = el;
-        this.grid[0][col] = block;
-        this.blocks.push(block);
+        this.boardEl.appendChild(el); block.el = el;
+        this.grid[0][col] = block; this.blocks.push(block);
         this.updateBlockPosition(block);
 
         if (instant) {
             let dropRow = 0;
             while(dropRow < GameConfig.rows - 1 && this.grid[dropRow+1][col] === null) {
-                this.grid[dropRow][col] = null; dropRow++;
-                this.grid[dropRow][col] = block; block.row = dropRow;
+                this.grid[dropRow][col] = null; dropRow++; this.grid[dropRow][col] = block; block.row = dropRow;
             }
             this.updateBlockPosition(block);
         }
@@ -501,7 +487,6 @@ class TenDropGame {
             }
         }
     }
-
     updateBlockPosition(block) {
         if(!block.el) return;
         block.el.style.left = (block.col * this.blockSize + 2) + 'px';
@@ -518,8 +503,7 @@ class TenDropGame {
     checkSum() {
         const selected = this.blocks.filter(b => b.selected);
         const sum = selected.reduce((acc, b) => acc + b.val, 0);
-        this.sumEl.innerText = sum;
-        this.sumEl.className = ''; 
+        this.sumEl.innerText = sum; this.sumEl.className = ''; 
 
         if (sum === 10) {
             this.sumEl.classList.add('valid');
@@ -528,6 +512,7 @@ class TenDropGame {
                 this.removeBlocks(selected);
                 this.sumEl.innerText = 0; this.sumEl.className = '';
                 this.checkLevelUp();
+                this.checkWinCondition(); // ★勝利判定
             }, 150);
         } else if (sum > 10) {
             this.sumEl.classList.add('invalid');
@@ -555,10 +540,23 @@ class TenDropGame {
             this.boardEl.style.backgroundColor = '#dff9fb';
             setTimeout(() => this.boardEl.style.backgroundColor = '#ecf0f1', 200);
         }
-        this.updateUI();
+    }
+    
+    // ★勝利判定
+    checkWinCondition() {
+        if (this.score >= GameConfig.targetScore) {
+            this.gameClear();
+        }
     }
 
-    updateUI() { this.scoreEl.innerText = this.score; this.levelEl.innerText = this.level; }
+    updateUI() { 
+        this.scoreEl.innerText = this.score; 
+        this.levelEl.innerText = this.level; 
+        
+        // プログレスバー更新
+        const pct = Math.min(100, (this.score / GameConfig.targetScore) * 100);
+        this.progressFill.style.width = pct + '%';
+    }
 
     gameOver() {
         this.isGameOver = true; this.stopTimers();
@@ -566,6 +564,12 @@ class TenDropGame {
         document.getElementById('title-text').innerText = "GAME OVER";
         document.getElementById('msg-text').innerHTML = `SCORE: <strong>${this.score}</strong><br>LEVEL: ${this.level}`;
         this.startOverlay.style.display = 'flex';
+    }
+    
+    // ★ゲームクリア処理
+    gameClear() {
+        this.isGameOver = true; this.stopTimers();
+        this.clearOverlay.style.display = 'flex';
     }
 }
 
